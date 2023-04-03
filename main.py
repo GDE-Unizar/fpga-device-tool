@@ -56,16 +56,18 @@ def main():
 
     # def utils
 
-    def step(title, finish=False):
-        if finish:
-            step.current = step.total
-        elif step.current >= step.total:
+    def step(title):
+        if not step.running: return False
+
+        if step.current >= step.total:
             step.total = step.current + 1
         window.write_event_value('one_line_progress_meter',
                                  [["Programming boards", step.current, step.total, title], {'keep_on_top': True}])
         step.current += 1
+        return step.running
 
     def background(function, total):
+        step.running = True
         step.total = total
         step.current = 0
         window.disable()
@@ -167,7 +169,7 @@ def main():
         elif event == 'enableAll':
             def f():
                 for i in fpgas:
-                    step(f"Enabling board {i + 1}")
+                    if not step(f"Enabling board {i + 1}"): return
                     fpgas.enable(i)
 
             background(f, len(fpgas))
@@ -175,7 +177,7 @@ def main():
         elif event == 'disableAll':
             def f():
                 for i in fpgas:
-                    step(f"Disabling board {i + 1}")
+                    if not step(f"Disabling board {i + 1}"): return
                     fpgas.disable(i)
 
             background(f, len(fpgas))
@@ -184,24 +186,27 @@ def main():
             def f():
                 with fpgas:
                     for i in fpgas:
-                        step(f"Enabling board {i + 1}")
+                        if not step(f"Enabling board {i + 1}"): return
                         fpgas.enable_only(i)
                         if i == 0:
-                            step("Initializing Vivado")
+                            if not step("Initializing Vivado"): return
                             vivado.prepare()
-                        step(f"Programming board {i + 1}")
+                        if not step(f"Programming board {i + 1}"): return
                         program()
 
             background(f, 1 + 2 * len(fpgas))
 
         elif event == 'one_line_progress_meter':
             args, kwargs = values[event]
-            sg.one_line_progress_meter(*args, **kwargs)
+            step.running = sg.one_line_progress_meter(*args, **kwargs)
+            if not step.running:
+                window.force_focus()
 
         elif event == 'finished':
-            # sg.one_line_progress_meter_cancel()
-            step("Finished", finish=True)
+            step.running = False
+            sg.one_line_progress_meter_cancel()
             window.enable()
+            window.force_focus()
 
         elif '_' in event:
             type, i = event.split('_')
