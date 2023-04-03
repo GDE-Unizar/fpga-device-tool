@@ -1,0 +1,19 @@
+name: Build GUI exe with Pyinstaller
+
+on:
+  workflow_dispatch:
+  
+jobs:
+  build:
+
+    runs-on: windows-latest
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Package Application
+      run: ./build.bat
+
+    - uses: actions/upload-artifact@v3
+      with:
+        path: dist
