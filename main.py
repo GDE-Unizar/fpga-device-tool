@@ -52,7 +52,7 @@ def main():
         ]], expand_x=True, element_justification='Right')],
     ]
     rows = 0
-    window = sg.Window("FPGA device tool", layout)
+    window = sg.Window("FPGA device tool", layout, icon=os.path.join(os.path.dirname(__file__), 'logo.ico'))
 
     # def utils
 
@@ -258,9 +258,9 @@ def main_admin():
     try:
         main()
     except Exception as e:
+        print("An exception ocurred:")
         print(e)
-    finally:
-        input("exit")
+        input("Press enter to exit")
 
 
 if __name__ == '__main__':
