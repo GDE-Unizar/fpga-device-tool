@@ -2,11 +2,21 @@ name: Build GUI exe with Pyinstaller
 
 on:
   workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Tag to use for the release'
+        required: true
+        type: string
   
 jobs:
   build:
 
     runs-on: windows-latest
+
+    permissions:
+      contents: write
+    env:
+      GH_TOKEN: ${{ github.token }}
 
     steps:
     - uses: actions/checkout@v3
@@ -14,6 +24,16 @@ jobs:
     - name: Package Application
       run: ./build.bat
 
-    - uses: actions/upload-artifact@v3
-      with:
-        path: dist
+    - name: Create tag
+      run: |
+        git tag -f ${{ inputs.tag }}
+        git push origin -f ${{ inputs.tag }}
+
+    - name: Create release
+      run: |
+        gh release create ${{ inputs.tag }} --generate-notes
+
+    - name: Upload executables
+      run: |
+        cd dist
+        gh release upload ${{ inputs.tag }} $(Get-ChildItem . -name)
