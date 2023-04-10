@@ -62,16 +62,6 @@ class FPGAs:
         print(subprocess.check_call(f"pnputil /disable-device {self.fpgas[i].id}"))
         self.fpgas[i].enabled = False
 
-    def disable_all(self):
-        for i in self:
-            self.disable(i)
-
-    def enable_only(self, i):
-        self.enable(i)
-        for j in self:
-            if j != i:
-                self.disable(j)
-
     def save_state(self):
         self.state = [self.enabled(i) for i in self]
 
