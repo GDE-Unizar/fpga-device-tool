@@ -1,3 +1,4 @@
+import glob
 import subprocess
 from time import sleep
 
@@ -16,9 +17,10 @@ class Vivado:
                                           stdout=subprocess.PIPE,
                                           stderr=subprocess.STDOUT,
                                           )
-        # TODO find vivado version programmatically
-        print("launching Vivado...")
-        self._run("C:/Xilinx/Vivado/2022.1/bin/vivado.bat -mode tcl -nolog -nojournal -verbose")
+        # TODO allow user to choose version
+        launcher = sorted(glob.glob("C:/Xilinx/Vivado/*/bin/vivado.bat"))[-1]
+        print("launching Vivado", launcher, "...")
+        self._run(launcher + " -mode tcl -nolog -nojournal -verbose")
 
         # initialize hardware manager
         self._run("load_features labtools")
