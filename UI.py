@@ -117,7 +117,7 @@ class UI:
             self.window[f'icon_{i}'].TKCanvas.create_oval(0, 0, ICON_SIZE, ICON_SIZE,
                                                           fill='green' if fpgas.enabled(i) else 'red')
             self.window[f'text_{i}'].update(fpgas.name(i))
-            update_toltip(self.window[f'text_{i}'], fpgas.name(i, full=True))
+            update_toltip(self.window[f'text_{i}'], fpgas.id(i))
             self.window[f'toggle_{i}'].update("Disable" if fpgas.enabled(i) else "Enable")
             self.window[f'program_{i}'].update(disabled=not hasBitstream)
 

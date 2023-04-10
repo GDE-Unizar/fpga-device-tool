@@ -51,21 +51,24 @@ def main():
 
         def programAll(self):
             def f():
-                with fpgas:
-                    for i in fpgas:
-                        self.step(f"Enabling board {i + 1}")
-                        fpgas.enable(i)
-                        for j in fpgas:
-                            if j != i:
-                                self.step(f"Disabling board {j + 1}")
-                                fpgas.disable(j)
-                        if i == 0:
-                            self.step("Initializing Vivado")
-                            vivado.prepare()
-                        self.step(f"Programming board {i + 1}")
-                        self.do_program()
+                states = fpgas.get_state()
+                for i in fpgas:
+                    self.step(f"Enabling board {i + 1}")
+                    fpgas.enable(i)
+                    for j in fpgas:
+                        if j != i:
+                            self.step(f"Disabling board {j + 1}")
+                            fpgas.disable(j)
+                    if i == 0:
+                        self.step("Initializing Vivado (may take a while)")
+                        vivado.prepare()
+                    self.step(f"Programming board {i + 1}")
+                    self.do_program()
+                for i, state in states:
+                    self.step(f"Restoring {'enabled' if state else 'disabled'} board {i + 1}")
+                    fpgas.toggle(i, state)
 
-            self.background(f, 1 + len(fpgas) * (2 + len(fpgas) - 1))
+            self.background(f, len(fpgas) * (1 + (len(fpgas) - 1) + 1) + 1 + len(fpgas))
 
         def toggle(self, i):
             def f(i):
@@ -87,24 +90,27 @@ def main():
                         self.step(f"Disabling board {j + 1}")
                         fpgas.disable(j)
 
-            self.background(lambda: f(int(i)), len(fpgas))
+            self.background(lambda: f(int(i)), 1 + (len(fpgas) - 1))
 
         def program(self, i):
             def f(i):
-                with fpgas:
-                    self.step("Enabling board")
-                    fpgas.enable(i)
-                    for j in fpgas:
-                        if j != i:
-                            self.step(f"Disabling board {j + 1}")
-                            fpgas.disable(j)
-                    self.step("Initializing Vivado")
-                    vivado.prepare()
-                    self.step("Programming board")
-                    self.do_program()
+                states = fpgas.get_state()
+                self.step("Enabling board")
+                fpgas.enable(i)
+                for j in fpgas:
+                    if j != i:
+                        self.step(f"Disabling board {j + 1}")
+                        fpgas.disable(j)
+                self.step("Initializing Vivado (may take a while)")
+                vivado.prepare()
+                self.step("Programming board")
+                self.do_program()
 
+                for i, state in states:
+                    self.step(f"Restoring {'enabled' if state else 'disabled'} board {i + 1}")
+                    fpgas.toggle(i, state)
 
-            self.background(lambda: f(int(i)), len(fpgas) + 3)
+            self.background(lambda: f(int(i)), 1 + (len(fpgas) - 1) + 2 + len(fpgas))
 
     ui = CustomUI()
 

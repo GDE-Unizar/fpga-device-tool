@@ -11,6 +11,9 @@ class FPGAs:
         self.state = []
 
     def update(self):
+        """
+        Updates the state of the fpgas
+        """
 
         # get all
         output = subprocess.check_output("pnputil /enum-devices /class USB /connected").decode("utf-8").replace("\r\n",
@@ -41,42 +44,79 @@ class FPGAs:
         self.fpgas = fpgas
 
     def enabled(self, i):
+        """
+        returns true iff board 'i' is enabled
+        """
         return self.fpgas[i].enabled
 
     def allEnabled(self):
+        """
+        returns true iff all boards are enabled
+        """
         return all(self.enabled(i) for i in self)
 
     def allDisabled(self):
+        """
+        returns true iff all boards are disabled
+        """
         return all(not self.enabled(i) for i in self)
 
-    def name(self, i, full=False):
-        return self.fpgas[i].id if full else self.fpgas[i].name
+    def name(self, i):
+        """
+        returns the name of board 'i'
+        """
+        return self.fpgas[i].name
+
+    def id(self,i):
+        """
+        Returns the id of board 'i'
+        """
+        return self.fpgas[i].id
+
+    def toggle(self, i, state=None):
+        """
+        Sets the state of board 'i'
+        Call without parameters to toggle
+        """
+        if state is None: state = not self.enabled(i)
+        self.enable(i) if state else self.disable(i)
 
     def enable(self, i):
+        """
+        Enables board 'i'
+        """
+        if self.enabled(i): return
+
         print("Enabling", self)
         print(subprocess.check_call(f"pnputil /enable-device {self.fpgas[i].id}"))
         self.fpgas[i].enabled = True
 
     def disable(self, i):
+        """
+        Disabled board 'i'
+        """
+        if not self.enabled(i): return
+
         print("Disabling", self)
         print(subprocess.check_call(f"pnputil /disable-device {self.fpgas[i].id}"))
         self.fpgas[i].enabled = False
 
-    def save_state(self):
-        self.state = [self.enabled(i) for i in self]
-
-    def restore_state(self):
-        for i, s in enumerate(self.state):
-            self.enable(i) if s else self.disable(i)
+    def get_state(self):
+        """
+        returns all the current states of all boards
+        """
+        return [(i, self.enabled(i)) for i in self]
 
     def __len__(self):
+        """
+        the length of this object is the number of available fpgas
+        for convenience
+        """
         return len(self.fpgas)
 
     def __iter__(self):
+        """
+        Iterating this object is the same as iterating range(len(self))
+        for convenience
+        """
         return range(len(self)).__iter__()
-
-    def __enter__(self):
-        self.save_state()
-
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        self.restore_state()
