@@ -1,7 +1,6 @@
 import os.path
-from types import SimpleNamespace
-
 import subprocess
+from types import SimpleNamespace
 
 
 class FPGAs:
@@ -16,8 +15,10 @@ class FPGAs:
         """
 
         # get all
-        output = subprocess.check_output("pnputil /enum-devices /class USB /connected").decode("utf-8").replace("\r\n",
-                                                                                                                "\n")
+        output = subprocess.check_output(
+            "pnputil /enum-devices /class USB /connected",
+            universal_newlines=True
+        )
 
         # process
         devices = []
@@ -67,7 +68,7 @@ class FPGAs:
         """
         return self.fpgas[i].name
 
-    def id(self,i):
+    def id(self, i):
         """
         Returns the id of board 'i'
         """
