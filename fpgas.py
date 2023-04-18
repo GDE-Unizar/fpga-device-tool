@@ -40,8 +40,10 @@ class FPGAs:
             fpga.enabled = fpga.status in ["Started", "Iniciado", "Enabled"]
             fpga.name = fpga.id[prefix:-suffix] if len(fpgas) > 1 else fpga.id
 
+        # log
         print("FPGAs found:")
-        print("\n".join(map(str, fpgas)))
+        for fpga in fpgas:
+            print(">", fpga)
         self.fpgas = fpgas
 
     def enabled(self, i):
@@ -89,7 +91,14 @@ class FPGAs:
         if self.enabled(i): return
 
         print("Enabling", self)
-        print(subprocess.check_call(f"pnputil /enable-device {self.fpgas[i].id}"))
+        for i in range(10):
+            try:
+                print(subprocess.check_call(f"pnputil /enable-device {self.fpgas[i].id}"))
+                break
+            except Exception:
+                pass
+        else:
+            print("Unable to enable the device")
         self.fpgas[i].enabled = True
 
     def disable(self, i):
@@ -99,7 +108,14 @@ class FPGAs:
         if not self.enabled(i): return
 
         print("Disabling", self)
-        print(subprocess.check_call(f"pnputil /disable-device {self.fpgas[i].id}"))
+        for i in range(10):
+            try:
+                print(subprocess.check_call(f"pnputil /disable-device {self.fpgas[i].id}"))
+                break
+            except Exception:
+                pass
+        else:
+            print("Unable to disable the device")
         self.fpgas[i].enabled = False
 
     def get_state(self):
