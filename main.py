@@ -16,7 +16,7 @@ def main():
         def __init__(self):
             super().__init__()
 
-            # do nothing
+            # do nothing by default, override for custom
             self.refresh = lambda: None
             self.autoRefresh = lambda: None
             self.bitstream = lambda: None
@@ -27,11 +27,19 @@ def main():
         def do_program(self):
             preScript = self.get_value('preScript')
             if preScript != '':
+                if self.get_value('prePrePause'):
+                    self.wait("Paused before running pre-script")
                 subprocess.call(preScript)
+            if self.get_value('prePause'):
+                self.wait("Paused before programming")
             vivado.program(self.get_value('bitstream'))
+            if self.get_value('postPause'):
+                self.wait("Paused after programming")
             postScript = self.get_value('postScript')
             if postScript != '':
                 subprocess.call(postScript)
+                if self.get_value('postPostPause'):
+                    self.wait("Paused after running post-script")
 
         def enableAll(self):
             def f():

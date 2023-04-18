@@ -1,5 +1,4 @@
 import os
-import subprocess
 
 import PySimpleGUI as sg
 
@@ -19,39 +18,43 @@ class UI:
         self.current = 0
         self.total = 0
 
-        layout = [
-            # top row
+        boards_layout = sg.Frame(title=INIT, key="info", expand_y=True, layout=[
             [
-                # info
-                sg.Text(INIT, key='info', expand_x=True),
-
-                # middle buttons
-                sg.Column([[
-                    sg.FileBrowse(INIT, key='preScript', tooltip=INIT, enable_events=True, target='preScript'),
-                    sg.FileBrowse(INIT, file_types=(("Bitstreams", '*.bit'), ("ALL Files", '.*')), key='bitstream', tooltip=INIT, enable_events=True, target='bitstream'),
-                    sg.FileBrowse(INIT, key='postScript', tooltip=INIT, enable_events=True, target='postScript'),
-                ]], expand_x=True, element_justification='Center'),
-
-                # right buttons
-                sg.Column([[
+                # refresh
+                sg.Column(expand_x=True, element_justification='Left', layout=[[
+                    sg.Checkbox("Auto-refresh", True, key='autoRefresh', enable_events=True),
+                    sg.Button("Refresh", key='refresh')
+                ]]),
+                # buttons
+                sg.Column(expand_x=True, element_justification='Right', layout=[[
                     sg.Button("Enable all", key='enableAll'),
                     sg.Button("Disable all", key='disableAll'),
                     sg.Button("Program all", key='programAll'),
-                ]], expand_x=True, element_justification='Right'),
+                ]]),
             ],
+
+            # separation
             [sg.HorizontalSeparator()],
 
-            # containers
+            # container
             [sg.Column([], key='boards', expand_x=True)],
+        ])
 
-            # bottom buttons
-            [sg.Column([[
-                sg.Checkbox("Auto-refresh", True, key='autoRefresh', enable_events=True),
-                sg.Button("Refresh", key='refresh')
-            ]], expand_x=True, element_justification='Right')],
-        ]
+        program_layout = sg.Frame(title="Programming", vertical_alignment='top', layout=[
+            [sg.Checkbox("Pause before running pre-script", key="prePrePause")],
+            [sg.FileBrowse(INIT, key='preScript', tooltip=INIT, enable_events=True, target='preScript')],
+            [sg.Checkbox("Pause before programming", key="prePause")],
+            [sg.FileBrowse(INIT, file_types=(("Bitstreams", '*.bit'), ("ALL Files", '.*')), key='bitstream', tooltip=INIT, enable_events=True, target='bitstream')],
+            [sg.Checkbox("Pause after programming", key="postPause")],
+            [sg.FileBrowse(INIT, key='postScript', tooltip=INIT, enable_events=True, target='postScript')],
+            [sg.Checkbox("Pause after running post-script", key="prePrePause")],
+        ])
         self.rows = 0
-        self.window = sg.Window("FPGA device tool", layout, icon=os.path.join(os.path.dirname(__file__), 'logo.ico'))
+        self.window = sg.Window(
+            "FPGA device tool",
+            [[boards_layout, program_layout]],
+            icon=os.path.join(os.path.dirname(__file__), 'logo.ico'),
+        )
 
         _, self.values = self.window.read(0)
 
@@ -161,6 +164,11 @@ class UI:
             if not self.running:
                 self.window.force_focus()
 
+        elif event == 'popup':
+            # called from background process, show popup
+            args, kwargs = self.values[event]
+            sg.popup(*args, **kwargs)
+
         elif event == 'finished':
             # finished background process, hide process and reenable
             self.running = False
@@ -175,6 +183,23 @@ class UI:
                 getattr(self, splits[0])(*splits[1:])
             else:
                 print("No function exists for event:", event)
+
+    def background(self, function, total):
+        """
+        Starts a background process
+        """
+        self.running = True
+        self.total = total
+        self.current = 0
+        self.window.disable()
+
+        def _background(function):
+            try:
+                function()
+            except CancelException:
+                pass
+
+        self.window.perform_long_operation(lambda: _background(function), end_key='finished')
 
     def step(self, title):
         """
@@ -197,21 +222,18 @@ class UI:
         if not self.running:
             raise CancelException()
 
-    def background(self, function, total):
-        self.running = True
-        self.total = total
-        self.current = 0
-        self.window.disable()
-        self.window.perform_long_operation(lambda: self._background(function), end_key='finished')
+    def wait(self, message):
+        """
+        Asks the user to continue
+        """
+        self.window.write_event_value('popup', [
+            [message, "", "Press to continue"], {'title': "Wait", 'custom_text': "continue", 'keep_on_top': True}
+        ])
 
-    def _background(self, function):
-        try:
-            function()
-        except CancelException:
-            pass
 
 class CancelException(Exception):
     pass
+
 
 def update_toltip(element, tooltip):
     if element.TooltipObject is None or tooltip != element.TooltipObject.text:
