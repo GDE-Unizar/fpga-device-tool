@@ -30,11 +30,12 @@ def main():
                 if self.get_value('prePrePause'):
                     self.wait("Paused before running pre-script")
                 subprocess.call(preScript)
-            if self.get_value('prePause'):
-                self.wait("Paused before programming")
-            vivado.program(self.get_value('bitstream'))
-            if self.get_value('postPause'):
-                self.wait("Paused after programming")
+            if self.get_value('bitstream'):
+                if self.get_value('prePause'):
+                    self.wait("Paused before programming")
+                vivado.program(self.get_value('bitstream'))
+                if self.get_value('postPause'):
+                    self.wait("Paused after programming")
             postScript = self.get_value('postScript')
             if postScript != '':
                 subprocess.call(postScript)
@@ -67,7 +68,7 @@ def main():
                         if j != i:
                             self.step(f"Disabling board {j + 1}")
                             fpgas.disable(j)
-                    if i == 0:
+                    if i == 0 and self.get_value('bitstream'):
                         self.step("Initializing Vivado (may take a while)")
                         vivado.prepare()
                     self.step(f"Programming board {i + 1}")
@@ -109,8 +110,9 @@ def main():
                     if j != i:
                         self.step(f"Disabling board {j + 1}")
                         fpgas.disable(j)
-                self.step("Initializing Vivado (may take a while)")
-                vivado.prepare()
+                if self.get_value('bitstream'):
+                    self.step("Initializing Vivado (may take a while)")
+                    vivado.prepare()
                 self.step("Programming board")
                 self.do_program()
 

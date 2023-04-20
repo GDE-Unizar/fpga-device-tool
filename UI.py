@@ -42,11 +42,23 @@ class UI:
 
         program_layout = sg.Frame(title="Programming", vertical_alignment='top', layout=[
             [sg.Checkbox("Pause before running pre-script", key="prePrePause")],
-            [sg.FileBrowse(INIT, key='preScript', tooltip=INIT, enable_events=True, target='preScript')],
+            [
+                sg.FileBrowse(INIT, key='preScriptSet', tooltip=INIT, target='preScript'),
+                sg.Input(key='preScript', enable_events=True, visible=False),
+                sg.Button("X", key='clear_preScript', visible=False),
+            ],
             [sg.Checkbox("Pause before programming", key="prePause")],
-            [sg.FileBrowse(INIT, file_types=(("Bitstreams", '*.bit'), ("ALL Files", '.*')), key='bitstream', tooltip=INIT, enable_events=True, target='bitstream')],
+            [
+                sg.FileBrowse(INIT, file_types=(("Bitstreams", '*.bit'), ("ALL Files", '.*')), key='bitstreamSet', tooltip=INIT, target='bitstream'),
+                sg.Input(key='bitstream', enable_events=True, visible=False),
+                sg.Button("X", key='clear_bitstream', visible=False),
+            ],
             [sg.Checkbox("Pause after programming", key="postPause")],
-            [sg.FileBrowse(INIT, key='postScript', tooltip=INIT, enable_events=True, target='postScript')],
+            [
+                sg.FileBrowse(INIT, key='postScriptSet', tooltip=INIT, target='postScript'),
+                sg.Input(key='postScript', enable_events=True, visible=False),
+                sg.Button("X", key='clear_postScript', visible=False),
+            ],
             [sg.Checkbox("Pause after running post-script", key="prePrePause")],
         ])
         self.rows = 0
@@ -65,34 +77,41 @@ class UI:
 
         # preScript
         hasPreScript = self.values.get('preScript', '') != ''
-        self.window['preScript'].update(os.path.basename(self.values['preScript']) if hasPreScript else "Pre script")
-        self.window['preScript'].expand(True)
+        self.window['preScriptSet'].update(os.path.basename(self.values['preScript']) if hasPreScript else "No pre script")
+        self.window['preScriptSet'].expand(True)
         update_toltip(
-            self.window['preScript'],
-            self.values['preScript'] if hasPreScript else "Press to run a script before programming a board"
+            self.window['preScriptSet'],
+            self.values['preScriptSet'] if hasPreScript else "Press to run a script before programming a board"
         )
+        self.window['clear_preScript'].update(visible=hasPreScript)
+
         # bitstream
         hasBitstream = self.values.get('bitstream', '') != ''
-        self.window['bitstream'].update(os.path.basename(self.values['bitstream']) if hasBitstream else "Bitstream")
-        self.window['bitstream'].expand(True)
+        self.window['bitstreamSet'].update(os.path.basename(self.values['bitstream']) if hasBitstream else "No bitstream")
+        self.window['bitstreamSet'].expand(True)
         update_toltip(
-            self.window['bitstream'],
-            self.values['bitstream'] if hasBitstream else "Press to show a bitstream to program"
+            self.window['bitstreamSet'],
+            self.values['bitstreamSet'] if hasBitstream else "Press to show a bitstream to program"
         )
+        self.window['clear_bitstream'].update(visible=hasBitstream)
+
         # postScript
         hasPostScript = self.values.get('postScript', '') != ''
-        self.window['postScript'].update(os.path.basename(self.values['postScript']) if hasPostScript else "Post script")
-        self.window['postScript'].expand(True)
+        self.window['postScriptSet'].update(os.path.basename(self.values['postScript']) if hasPostScript else "No post script")
+        self.window['postScriptSet'].expand(True)
         update_toltip(
-            self.window['postScript'],
-            self.values['postScript'] if hasPostScript else "Press to run a script after programming a board"
+            self.window['postScriptSet'],
+            self.values['postScriptSet'] if hasPostScript else "Press to run a script after programming a board"
         )
+        self.window['clear_postScript'].update(visible=hasPostScript)
+
+        canProgram = hasPreScript or hasBitstream or hasPostScript
 
         # info
         self.window['info'].update(f"Boards: {len(fpgas)}")
 
         # buttons
-        self.window['programAll'].update(disabled=not hasBitstream)
+        self.window['programAll'].update(disabled=not canProgram)
         self.window['enableAll'].update(disabled=fpgas.allEnabled())
         self.window['disableAll'].update(disabled=fpgas.allDisabled())
 
@@ -122,7 +141,7 @@ class UI:
             self.window[f'text_{i}'].update(fpgas.name(i))
             update_toltip(self.window[f'text_{i}'], fpgas.id(i))
             self.window[f'toggle_{i}'].update("Disable" if fpgas.enabled(i) else "Enable")
-            self.window[f'program_{i}'].update(disabled=not hasBitstream)
+            self.window[f'program_{i}'].update(disabled=not canProgram)
 
             self.window[f'row_{i}'].expand(True)  # fixes wrong size after updating
 
@@ -160,7 +179,7 @@ class UI:
         elif event == 'one_line_progress_meter':
             # called from background process, update progress
             args, kwargs = self.values[event]
-            self.running = sg.one_line_progress_meter(*args, **kwargs)
+            self.running = self.running and sg.one_line_progress_meter(*args, **kwargs)
             if not self.running:
                 self.window.force_focus()
 
@@ -230,6 +249,10 @@ class UI:
             [message, "", "Press to continue"], {'title': "Wait", 'custom_text': "continue", 'keep_on_top': True}
         ])
 
+    def clear(self, key):
+        # should be native, but it isn't
+        self.window[key]('')
+        self.values[key] = ''
 
 class CancelException(Exception):
     pass
