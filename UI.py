@@ -7,6 +7,8 @@ TIMEOUT = 500
 INIT = "Initializing..."
 ICON_SIZE = 10
 
+sg.theme('SystemDefaultForReal')
+
 
 class UI:
     def __init__(self):
@@ -121,7 +123,7 @@ class UI:
             if self.rows < i + 1:
                 self.window.extend_layout(self.window['boards'], [[sg.Column(
                     [[
-                        sg.Canvas(size=(ICON_SIZE + 1, ICON_SIZE + 1), key=f'icon_{i}'),
+                        sg.Canvas(size=(ICON_SIZE, ICON_SIZE), key=f'icon_{i}'),
                         sg.Text(key=f'text_{i}', expand_x=True),
                         sg.Button("Enable only", key=f'enableOnly_{i}'),
                         sg.Button("Toggle", key=f'toggle_{i}'),
@@ -136,8 +138,7 @@ class UI:
             self.window[f'row_{i}'].unhide_row()
 
             # update row
-            self.window[f'icon_{i}'].TKCanvas.create_oval(0, 0, ICON_SIZE, ICON_SIZE,
-                                                          fill='green' if fpgas.enabled(i) else 'red')
+            self.window[f'icon_{i}'].tk_canvas.create_oval(2, 2, ICON_SIZE, ICON_SIZE, fill='green' if fpgas.enabled(i) else 'red')
             self.window[f'text_{i}'].update(fpgas.name(i))
             update_toltip(self.window[f'text_{i}'], fpgas.id(i))
             self.window[f'toggle_{i}'].update("Disable" if fpgas.enabled(i) else "Enable")
@@ -253,6 +254,7 @@ class UI:
         # should be native, but it isn't
         self.window[key]('')
         self.values[key] = ''
+
 
 class CancelException(Exception):
     pass
