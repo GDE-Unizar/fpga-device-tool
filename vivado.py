@@ -1,5 +1,5 @@
-import glob
 import subprocess
+from glob import glob
 from time import sleep
 
 
@@ -7,8 +7,14 @@ class Vivado:
     def __init__(self):
         self._instance: subprocess.Popen | None = None
 
+        # TODO allow user to choose version
+        self.launcher = ([None] + sorted(glob("C:/Xilinx/Vivado/*/bin/vivado.bat")))[-1]
+
+    def is_vivado_available(self):
+        return self.launcher is not None
+
     def prepare(self):
-        if self._instance is not None: return
+        if self._instance is not None or self.launcher is None: return
 
         print("launching cmd...")
         self._instance = subprocess.Popen('cmd.exe',
@@ -17,10 +23,8 @@ class Vivado:
                                           stdout=subprocess.PIPE,
                                           stderr=subprocess.STDOUT,
                                           )
-        # TODO allow user to choose version
-        launcher = sorted(glob.glob("C:/Xilinx/Vivado/*/bin/vivado.bat"))[-1]
-        print("launching Vivado", launcher, "...")
-        self._run(launcher + " -mode tcl -nolog -nojournal -verbose")
+        print("launching Vivado", self.launcher, "...")
+        self._run(self.launcher + " -mode tcl -nolog -nojournal -verbose")
 
         # initialize hardware manager
         self._run("load_features labtools")
@@ -53,6 +57,7 @@ class Vivado:
             if expected in line: return line
 
     def program(self, bitfile):
+        if self.launcher is None: return
         self.prepare()
 
         # configure program
@@ -66,7 +71,7 @@ class Vivado:
             sleep(1)
 
     def close(self):
-        if self._instance is None: return
+        if self._instance is None or self.launcher is None: return
 
         print("Closing vivado")
         self._instance.communicate("exit")

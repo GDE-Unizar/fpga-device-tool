@@ -11,11 +11,10 @@ sg.theme('SystemDefaultForReal')
 
 
 class UI:
-    def __init__(self):
+    def __init__(self, is_vivado_available):
         """
         Initializes the UI
         """
-
         self.running = False
         self.current = 0
         self.total = 0
@@ -49,13 +48,13 @@ class UI:
                 sg.Input(key='preScript', enable_events=True, visible=False),
                 sg.Button("X", key='clear_preScript', visible=False),
             ],
-            [sg.Checkbox("Pause before programming", key="prePause")],
+            [sg.Checkbox("Pause before programming", key="prePause", visible=is_vivado_available)],
             [
-                sg.FileBrowse(INIT, file_types=(("Bitstreams", '*.bit'), ("ALL Files", '.*')), key='bitstreamSet', tooltip=INIT, target='bitstream'),
+                sg.FileBrowse(INIT, file_types=(("Bitstreams", '*.bit'), ("ALL Files", '.*')), key='bitstreamSet', tooltip=INIT, target='bitstream', visible=is_vivado_available),
                 sg.Input(key='bitstream', enable_events=True, visible=False),
                 sg.Button("X", key='clear_bitstream', visible=False),
             ],
-            [sg.Checkbox("Pause after programming", key="postPause")],
+            [sg.Checkbox("Pause after programming", key="postPause", visible=is_vivado_available)],
             [
                 sg.FileBrowse(INIT, key='postScriptSet', tooltip=INIT, target='postScript'),
                 sg.Input(key='postScript', enable_events=True, visible=False),
@@ -88,14 +87,17 @@ class UI:
         self.window['clear_preScript'].update(visible=hasPreScript)
 
         # bitstream
-        hasBitstream = self.values.get('bitstream', '') != ''
-        self.window['bitstreamSet'].update(os.path.basename(self.values['bitstream']) if hasBitstream else "No bitstream")
-        self.window['bitstreamSet'].expand(True)
-        update_toltip(
-            self.window['bitstreamSet'],
-            self.values['bitstreamSet'] if hasBitstream else "Press to show a bitstream to program"
-        )
-        self.window['clear_bitstream'].update(visible=hasBitstream)
+        if self.window['bitstreamSet'].visible:
+            hasBitstream = self.values.get('bitstream', '') != ''
+            self.window['bitstreamSet'].update(os.path.basename(self.values['bitstream']) if hasBitstream else "No bitstream")
+            self.window['bitstreamSet'].expand(True)
+            update_toltip(
+                self.window['bitstreamSet'],
+                self.values['bitstreamSet'] if hasBitstream else "Press to show a bitstream to program"
+            )
+            self.window['clear_bitstream'].update(visible=hasBitstream)
+        else:
+            hasBitstream = False
 
         # postScript
         hasPostScript = self.values.get('postScript', '') != ''

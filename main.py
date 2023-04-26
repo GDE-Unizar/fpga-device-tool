@@ -14,7 +14,7 @@ def main():
 
     class CustomUI(UI):
         def __init__(self):
-            super().__init__()
+            super().__init__(vivado.is_vivado_available())
 
             # do nothing by default, override for custom
             self.refresh = lambda: None
