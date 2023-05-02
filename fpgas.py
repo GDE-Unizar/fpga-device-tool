@@ -90,8 +90,8 @@ class FPGAs:
         """
         if self.enabled(i): return
 
-        print("Enabling", self)
-        for i in range(10):
+        print("Enabling", i)
+        for _ in range(10):
             try:
                 print(subprocess.check_call(f"pnputil /enable-device {self.fpgas[i].id}"))
                 break
@@ -107,8 +107,8 @@ class FPGAs:
         """
         if not self.enabled(i): return
 
-        print("Disabling", self)
-        for i in range(10):
+        print("Disabling", i)
+        for _ in range(10):
             try:
                 print(subprocess.check_call(f"pnputil /disable-device {self.fpgas[i].id}"))
                 break
