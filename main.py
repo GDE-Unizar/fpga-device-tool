@@ -118,7 +118,10 @@ def main():
         # steps
 
         def steps(self):
-            pass
+            selection = self.get_steps_selection()
+            if selection is not None and selection >= len(self.steps_values):
+                # remove selection
+                self._update_steps(None)
 
         def stepsUp(self):
             self._change_selection(-1)
@@ -130,7 +133,7 @@ def main():
             self._change_selection(1)
 
         def _change_selection(self, offset):
-            selection = (self.window['steps'].get_indexes() + (None,))[0]
+            selection = self.get_steps_selection()
             if selection is None: return
             if offset:
                 # swap
@@ -146,25 +149,35 @@ def main():
 
         def stepsPause(self):
             # add pause
-            self.steps_values += [('pause', 'Pause', None)]
-            self._update_steps()
+            self._addStep('pause', 'Pause', None)
 
         def stepsScript(self):
             # add script
             file = self.values['stepsScript']
-            self.steps_values += [('script', f'Run "{os.path.basename(file)}"', file)]
-            self._update_steps()
+            self._addStep('script', f'Run "{os.path.basename(file)}"', file)
 
         def stepsBitstream(self):
             # add bistream
             file = self.values['stepsBitstream']
-            self.steps_values += [('bitstream', f'Program "{os.path.basename(file)}"', file)]
-            self._update_steps()
+            self._addStep('bitstream', f'Program "{os.path.basename(file)}"', file)
+
+        def _addStep(self, *step):
+            selection = self.get_steps_selection()
+            if selection is None:
+                # if nothing is selected, add at the end
+                selection = len(self.steps_values)
+            else:
+                # if something is selected, add below it
+                # adding above is the logical choice (allows adding as first)
+                # but adding below just feels more natural (allows adding sequences)
+                selection += 1
+            self.steps_values.insert(selection, step)
+            self._update_steps(selection)
 
         def _update_steps(self, selection=-1):
             # sets the steps and selection values
             if selection is not None and selection < 0: selection += len(self.steps_values)
-            self.window['steps'](values=[x[1] for x in self.steps_values], set_to_index=selection, scroll_to_index=selection)
+            self.window['steps'](values=[x[1] for x in self.steps_values] + [""], set_to_index=selection, scroll_to_index=selection)
 
     ui = CustomUI()
 

@@ -77,7 +77,7 @@ class UI:
         """
 
         # steps
-        selection = (self.window['steps'].get_indexes() + (None,))[0]
+        selection = self.get_steps_selection()
         self.window['stepsUp'](disabled=selection is None or selection <= 0)
         self.window['stepsRemove'](disabled=selection is None)
         self.window['stepsDown'](disabled=selection is None or selection >= len(self.steps_values) - 1)
@@ -136,6 +136,9 @@ class UI:
         returns a value from the window
         """
         return self.values.get(name, default)
+
+    def get_steps_selection(self):
+        return (self.window['steps'].get_indexes() + (None,))[0]
 
     def tick(self):
         """
@@ -232,7 +235,6 @@ class UI:
         # should be native, but it isn't
         self.window[key]('')
         self.values[key] = ''
-
 
 class CancelException(Exception):
     pass
