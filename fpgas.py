@@ -37,7 +37,11 @@ class FPGAs:
         prefix = len(os.path.commonprefix([fpga.id for fpga in fpgas]))
         suffix = len(os.path.commonprefix([fpga.id[::-1] for fpga in fpgas]))
         for fpga in fpgas:
-            fpga.enabled = fpga.status in ["Started", "Iniciado", "Enabled"]
+            fpga.enabled = (
+                True if fpga.status in ["Started", "Iniciado"]
+                else False if fpga.status in ["Disabled", "Disabled"]
+                else None
+            )
             fpga.name = fpga.id[prefix:-suffix] if len(fpgas) > 1 else fpga.id
 
         # log
@@ -48,21 +52,21 @@ class FPGAs:
 
     def enabled(self, i):
         """
-        returns true iff board 'i' is enabled
+        returns true if board 'i' is enabled, false if isn't, None if undefined/error
         """
         return self.fpgas[i].enabled
 
     def allEnabled(self):
         """
-        returns true iff all boards are enabled
+        returns true iff all boards are enabled (and can be disabled)
         """
-        return all(self.enabled(i) for i in self)
+        return all(self.enabled(i) is not False for i in self)
 
     def allDisabled(self):
         """
-        returns true iff all boards are disabled
+        returns true iff all boards are disabled (and can be enabled)
         """
-        return all(not self.enabled(i) for i in self)
+        return all(self.enabled(i) is not True for i in self)
 
     def name(self, i):
         """
@@ -81,6 +85,7 @@ class FPGAs:
         Sets the state of board 'i'
         Call without parameters to toggle
         """
+        if self.enabled(i) is None: return
         if state is None: state = not self.enabled(i)
         self.enable(i) if state else self.disable(i)
 
@@ -88,7 +93,7 @@ class FPGAs:
         """
         Enables board 'i'
         """
-        if self.enabled(i): return
+        if self.enabled(i) is not False: return
 
         print("Enabling", i)
         for _ in range(10):
@@ -103,9 +108,9 @@ class FPGAs:
 
     def disable(self, i):
         """
-        Disabled board 'i'
+        Disable board 'i'
         """
-        if not self.enabled(i): return
+        if self.enabled(i) is not True: return
 
         print("Disabling", i)
         for _ in range(10):

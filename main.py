@@ -74,6 +74,8 @@ def main():
 
         def toggle(self, i):
             def f(i):
+                if fpgas.enabled(i) is None:
+                    self.step("Skipping")
                 if fpgas.enabled(i):
                     self.step("Disabling")
                     fpgas.disable(i)

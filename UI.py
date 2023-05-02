@@ -113,10 +113,10 @@ class UI:
             self.window[f'row_{i}'].unhide_row()
 
             # update row
-            self.window[f'icon_{i}'].tk_canvas.create_oval(2, 2, ICON_SIZE, ICON_SIZE, fill='green' if fpgas.enabled(i) else 'red')
+            self.window[f'icon_{i}'].tk_canvas.create_oval(2, 2, ICON_SIZE, ICON_SIZE, fill={True: 'green', False: 'red', None: 'orange'}[fpgas.enabled(i)])
             self.window[f'text_{i}'].update(fpgas.name(i))
             update_toltip(self.window[f'text_{i}'], fpgas.id(i))
-            self.window[f'toggle_{i}'].update("Disable" if fpgas.enabled(i) else "Enable")
+            self.window[f'toggle_{i}'].update("Disable" if fpgas.enabled(i) is True else "Enable", disabled=fpgas.enabled(i) is None)
             self.window[f'program_{i}'].update(disabled=not canProgram)
 
             self.window[f'row_{i}'].expand(True)  # fixes wrong size after updating
