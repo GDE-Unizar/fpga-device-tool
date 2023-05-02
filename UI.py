@@ -3,7 +3,7 @@ from time import sleep
 
 import PySimpleGUI as sg
 
-TIMEOUT = 500
+TIMEOUT = 1000
 
 INIT = "Initializing..."
 ICON_SIZE = 10
