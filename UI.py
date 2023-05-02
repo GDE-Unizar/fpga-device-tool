@@ -1,4 +1,5 @@
 import os
+from time import sleep
 
 import PySimpleGUI as sg
 
@@ -15,9 +16,11 @@ class UI:
         """
         Initializes the UI
         """
+        self.waiting = False
         self.running = False
         self.current = 0
         self.total = 0
+        self.steps_values = []
 
         boards_layout = sg.Frame(title=INIT, key="info", expand_y=True, layout=[
             [
@@ -41,26 +44,23 @@ class UI:
             [sg.Column([], key='boards', expand_x=True)],
         ])
 
-        program_layout = sg.Frame(title="Programming", vertical_alignment='top', layout=[
-            [sg.Checkbox("Pause before running pre-script", key="prePrePause")],
+        program_layout = sg.Frame(title=INIT, key="stepsFrame", vertical_alignment='top', expand_y=True, layout=[
             [
-                sg.FileBrowse(INIT, key='preScriptSet', tooltip=INIT, target='preScript'),
-                sg.Input(key='preScript', enable_events=True, visible=False),
-                sg.Button("X", key='clear_preScript', visible=False),
+                sg.Listbox(expand_x=True, expand_y=True, key='steps', values=[], enable_events=True),
+
+                sg.Column(layout=[
+                    [sg.Button("/\\", key='stepsUp')],
+                    [sg.Button("X", key='stepsRemove')],
+                    [sg.Button("\\/", key='stepsDown')],
+                ]),
             ],
-            [sg.Checkbox("Pause before programming", key="prePause", visible=is_vivado_available)],
             [
-                sg.FileBrowse(INIT, file_types=(("Bitstreams", '*.bit'), ("ALL Files", '.*')), key='bitstreamSet', tooltip=INIT, target='bitstream', visible=is_vivado_available),
-                sg.Input(key='bitstream', enable_events=True, visible=False),
-                sg.Button("X", key='clear_bitstream', visible=False),
+                sg.Button("Add pause", key='stepsPause'),
+                sg.FileBrowse("Add script", target='stepsScript'),
+                sg.Input(key='stepsScript', enable_events=True, visible=False),
+                sg.FileBrowse("Add bitstream", target='stepsBitstream', visible=is_vivado_available),
+                sg.Input(key='stepsBitstream', enable_events=True, visible=False),
             ],
-            [sg.Checkbox("Pause after programming", key="postPause", visible=is_vivado_available)],
-            [
-                sg.FileBrowse(INIT, key='postScriptSet', tooltip=INIT, target='postScript'),
-                sg.Input(key='postScript', enable_events=True, visible=False),
-                sg.Button("X", key='clear_postScript', visible=False),
-            ],
-            [sg.Checkbox("Pause after running post-script", key="prePrePause")],
         ])
         self.rows = 0
         self.window = sg.Window(
@@ -76,40 +76,13 @@ class UI:
         Updates the UI with the current state and the given fpgas
         """
 
-        # preScript
-        hasPreScript = self.values.get('preScript', '') != ''
-        self.window['preScriptSet'].update(os.path.basename(self.values['preScript']) if hasPreScript else "No pre script")
-        self.window['preScriptSet'].expand(True)
-        update_toltip(
-            self.window['preScriptSet'],
-            self.values['preScriptSet'] if hasPreScript else "Press to run a script before programming a board"
-        )
-        self.window['clear_preScript'].update(visible=hasPreScript)
-
-        # bitstream
-        if self.window['bitstreamSet'].visible:
-            hasBitstream = self.values.get('bitstream', '') != ''
-            self.window['bitstreamSet'].update(os.path.basename(self.values['bitstream']) if hasBitstream else "No bitstream")
-            self.window['bitstreamSet'].expand(True)
-            update_toltip(
-                self.window['bitstreamSet'],
-                self.values['bitstreamSet'] if hasBitstream else "Press to show a bitstream to program"
-            )
-            self.window['clear_bitstream'].update(visible=hasBitstream)
-        else:
-            hasBitstream = False
-
-        # postScript
-        hasPostScript = self.values.get('postScript', '') != ''
-        self.window['postScriptSet'].update(os.path.basename(self.values['postScript']) if hasPostScript else "No post script")
-        self.window['postScriptSet'].expand(True)
-        update_toltip(
-            self.window['postScriptSet'],
-            self.values['postScriptSet'] if hasPostScript else "Press to run a script after programming a board"
-        )
-        self.window['clear_postScript'].update(visible=hasPostScript)
-
-        canProgram = hasPreScript or hasBitstream or hasPostScript
+        # steps
+        selection = (self.window['steps'].get_indexes() + (None,))[0]
+        self.window['stepsUp'](disabled=selection is None or selection <= 0)
+        self.window['stepsRemove'](disabled=selection is None)
+        self.window['stepsDown'](disabled=selection is None or selection >= len(self.steps_values) - 1)
+        canProgram = len(self.steps_values) > 0
+        self.window['stepsFrame'](f"Program steps: {len(self.steps_values)}")
 
         # info
         self.window['info'].update(f"Boards: {len(fpgas)}")
@@ -190,6 +163,7 @@ class UI:
             # called from background process, show popup
             args, kwargs = self.values[event]
             sg.popup(*args, **kwargs)
+            self.waiting = False
 
         elif event == 'finished':
             # finished background process, hide process and reenable
@@ -248,9 +222,13 @@ class UI:
         """
         Asks the user to continue
         """
+        self.waiting = True
         self.window.write_event_value('popup', [
             [message, "", "Press to continue"], {'title': "Wait", 'custom_text': "continue", 'keep_on_top': True}
         ])
+        while self.waiting:
+            # TODO: replace with queue to avoid polling
+            sleep(0.5)
 
     def clear(self, key):
         # should be native, but it isn't

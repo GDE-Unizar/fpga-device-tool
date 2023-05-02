@@ -25,22 +25,15 @@ def main():
 
         # def utils
         def do_program(self):
-            preScript = self.get_value('preScript')
-            if preScript != '':
-                if self.get_value('prePrePause'):
-                    self.wait("Paused before running pre-script")
-                subprocess.call(preScript)
-            if self.get_value('bitstream'):
-                if self.get_value('prePause'):
-                    self.wait("Paused before programming")
-                vivado.program(self.get_value('bitstream'))
-                if self.get_value('postPause'):
-                    self.wait("Paused after programming")
-            postScript = self.get_value('postScript')
-            if postScript != '':
-                subprocess.call(postScript)
-                if self.get_value('postPostPause'):
-                    self.wait("Paused after running post-script")
+            for command, _, parameter in self.steps_values:
+                if command == 'pause':
+                    self.wait("Paused")
+                elif command == 'script':
+                    subprocess.call(parameter)
+                elif command == 'bitstream':
+                    vivado.program(parameter)
+                else:
+                    print("Ignoring unknown programming command:", command, parameter)
 
         def enableAll(self):
             def f():
@@ -121,6 +114,57 @@ def main():
                     fpgas.toggle(i, state)
 
             self.background(lambda: f(int(i)), 1 + (len(fpgas) - 1) + 2 + len(fpgas))
+
+        # steps
+
+        def steps(self):
+            pass
+
+        def stepsUp(self):
+            self._change_selection(-1)
+
+        def stepsRemove(self):
+            self._change_selection(None)
+
+        def stepsDown(self):
+            self._change_selection(1)
+
+        def _change_selection(self, offset):
+            selection = (self.window['steps'].get_indexes() + (None,))[0]
+            if selection is None: return
+            if offset:
+                # swap
+                new_selection = selection + offset
+                if not (0 <= new_selection <= len(self.steps_values) - 1): return
+                self.steps_values[selection], self.steps_values[new_selection] = self.steps_values[new_selection], self.steps_values[selection]
+            else:
+                # remove
+                del self.steps_values[selection]
+                new_selection = selection if selection < len(self.steps_values) else len(self.steps_values) - 1 if len(self.steps_values) > 0 else None
+
+            self._update_steps(new_selection)
+
+        def stepsPause(self):
+            # add pause
+            self.steps_values += [('pause', 'Pause', None)]
+            self._update_steps()
+
+        def stepsScript(self):
+            # add script
+            file = self.values['stepsScript']
+            self.steps_values += [('script', f'Run "{os.path.basename(file)}"', file)]
+            self._update_steps()
+
+        def stepsBitstream(self):
+            # add bistream
+            file = self.values['stepsBitstream']
+            self.steps_values += [('bitstream', f'Program "{os.path.basename(file)}"', file)]
+            self._update_steps()
+
+        def _update_steps(self, selection=-1):
+            # sets the steps and selection values
+            if selection is not None and selection < 0: selection += len(self.steps_values)
+            self.window['steps'](values=[x[1] for x in self.steps_values], set_to_index=selection, scroll_to_index=selection)
 
     ui = CustomUI()
 
