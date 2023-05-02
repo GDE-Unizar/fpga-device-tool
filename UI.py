@@ -1,5 +1,5 @@
 import os
-from time import sleep
+from threading import Event
 
 import PySimpleGUI as sg
 
@@ -8,19 +8,19 @@ TIMEOUT = 1000
 INIT = "Initializing..."
 ICON_SIZE = 10
 
-sg.theme('SystemDefaultForReal')
-
 
 class UI:
     def __init__(self, is_vivado_available):
         """
         Initializes the UI
         """
-        self.waiting = False
+        self.waiting = Event()
         self.running = False
         self.current = 0
         self.total = 0
         self.steps_values = []
+
+        sg.theme('SystemDefaultForReal')
 
         boards_layout = sg.Frame(title=INIT, key="info", expand_y=True, layout=[
             [
@@ -163,7 +163,7 @@ class UI:
             # called from background process, show popup
             args, kwargs = self.values[event]
             sg.popup(*args, **kwargs)
-            self.waiting = False
+            self.waiting.set()
 
         elif event == 'finished':
             # finished background process, hide process and reenable
@@ -222,13 +222,11 @@ class UI:
         """
         Asks the user to continue
         """
-        self.waiting = True
+        self.waiting.clear()
         self.window.write_event_value('popup', [
             [message, "", "Press to continue"], {'title': "Wait", 'custom_text': "continue", 'keep_on_top': True}
         ])
-        while self.waiting:
-            # TODO: replace with queue to avoid polling
-            sleep(0.5)
+        self.waiting.wait()
 
     def clear(self, key):
         # should be native, but it isn't
