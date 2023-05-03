@@ -1,5 +1,9 @@
 # FPGA device tool
 
+Note: This tool was developed and published on the [SMACD 2023 conference](https://smacd-conference.org/). The IEEE reference link will be added here once available. If you use this tool please cite the paper (once available).
+
+## Description
+
 This Windows project was developed to allow programming multiple PYNQ-Z2 FPGA boards while keeping them connected to the computer.
 This particular board uses the same internal identifier, so tools like Vivado can't detect multiple boards connected to the same computer, and you can only program the first of them.
 The project solves this issue by enabling/disabling the devices. By disabling all except one you can choose which board will be discoverable and available to program, while keeping all the others connected and powered.
