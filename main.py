@@ -35,6 +35,9 @@ def main():
                 else:
                     print("Ignoring unknown programming command:", command, parameter)
 
+        def _has_bitream_step(self):
+            return any(c[0] == 'bitstream' for c in self.steps_values)
+
         def enableAll(self):
             def f():
                 for i in fpgas:
@@ -61,7 +64,7 @@ def main():
                         if j != i:
                             self.step(f"Disabling board {j + 1}")
                             fpgas.disable(j)
-                    if i == 0 and self.get_value('bitstream'):
+                    if i == 0 and self._has_bitream_step():
                         self.step("Initializing Vivado (may take a while)")
                         vivado.prepare()
                     self.step(f"Programming board {i + 1}")
@@ -105,7 +108,7 @@ def main():
                     if j != i:
                         self.step(f"Disabling board {j + 1}")
                         fpgas.disable(j)
-                if self.get_value('bitstream'):
+                if self._has_bitream_step():
                     self.step("Initializing Vivado (may take a while)")
                     vivado.prepare()
                 self.step("Programming board")
@@ -191,6 +194,8 @@ def main():
 
         # tick
         ui.tick()
+
+    vivado.close()
 
 
 @run_as_admin

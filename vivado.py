@@ -2,43 +2,57 @@ import subprocess
 from glob import glob
 from time import sleep
 
+PRE_LOAD = True
+
 
 class Vivado:
     def __init__(self):
         self._instance: subprocess.Popen | None = None
+        self.ready = False
 
         # TODO allow user to choose version
         self.launcher = ([None] + sorted(glob("C:/Xilinx/Vivado/*/bin/vivado.bat")))[-1]
 
+        # preload
+        if PRE_LOAD:
+            print("Preloading Vivado")
+            self.prepare(wait_ready=False)
+
     def is_vivado_available(self):
         return self.launcher is not None
 
-    def prepare(self):
-        if self._instance is not None or self.launcher is None: return
+    def prepare(self, wait_ready=True):
+        if self.ready: return  # already ready
+        if self.launcher is None: return  # cant launch
 
-        print("launching cmd...")
-        self._instance = subprocess.Popen('cmd.exe',
-                                          universal_newlines=True,
-                                          stdin=subprocess.PIPE,
-                                          stdout=subprocess.PIPE,
-                                          stderr=subprocess.STDOUT,
-                                          )
-        print("launching Vivado", self.launcher, "...")
-        self._run(self.launcher + " -mode tcl -nolog -nojournal -verbose")
+        if self._instance is None:
+            print("Launching cmd...")
+            self._instance = subprocess.Popen('cmd.exe',
+                                              universal_newlines=True,
+                                              stdin=subprocess.PIPE,
+                                              stdout=subprocess.PIPE,
+                                              stderr=subprocess.STDOUT,
+                                              )
+            print("launching Vivado", self.launcher, "...")
+            self._run(self.launcher + " -mode tcl -nolog -nojournal -verbose")
 
-        # initialize hardware manager
-        self._run("load_features labtools")
-        self._run("if { [catch {open_hw_manager} error] } { open_hw }")
-        self._run("connect_hw_server -url TCP:localhost:3121")
+            # initialize hardware manager
+            self._run("load_features labtools")
+            self._run("if { [catch {open_hw_manager} error] } { open_hw }")
+            self._run("connect_hw_server -url TCP:localhost:3121")
 
-        # connect to first available target
-        self._run("set targu [get_hw_targets *]")
-        self._run("current_hw_target $targu")
-        self._run("open_hw_target")
-        self._run("set hw_device [lindex [get_hw_devices] 1]")
-        self._run("current_hw_device $hw_device")
-        self._run('puts "vivado is now ready"')
-        self._waitUntil("vivado is now ready")
+            # connect to first available target
+            self._run("set targu [get_hw_targets *]")
+            self._run("current_hw_target $targu")
+            self._run("open_hw_target")
+            self._run("set hw_device [lindex [get_hw_devices] 1]")
+            self._run("current_hw_device $hw_device")
+            self._run('puts "vivado is now ready"')
+
+        if wait_ready:
+            print("Waiting until Vivado is ready")
+            self._waitUntil("vivado is now ready")
+            self.ready = True
 
     def _run(self, command):
         print("Running:", command)
@@ -71,7 +85,11 @@ class Vivado:
             sleep(1)
 
     def close(self):
-        if self._instance is None or self.launcher is None: return
+        if self._instance is None: return
 
-        print("Closing vivado")
-        self._instance.communicate("exit")
+        try:
+            print("Closing vivado")
+            self._instance.communicate("exit", timeout=2)
+        except subprocess.TimeoutExpired:
+            print("Killing Vivado")
+            self._instance.kill()
