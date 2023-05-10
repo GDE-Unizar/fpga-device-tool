@@ -3,7 +3,7 @@ from threading import Event
 
 import PySimpleGUI as sg
 
-TIMEOUT = 1000
+from CONFIG import UI_THEME, UI_REFRESH_TIMEOUT
 
 INIT = "Initializing..."
 ICON_SIZE = 10
@@ -20,9 +20,9 @@ class UI:
         self.total = 0
         self.steps_values = []
 
-        sg.theme('SystemDefaultForReal')
+        sg.theme(UI_THEME)
 
-        boards_layout = sg.Frame(title=INIT, key="info", expand_y=True, layout=[
+        boards_layout = sg.Frame(title=INIT, key='info', expand_y=True, layout=[
             [
                 # refresh
                 sg.Column(expand_x=True, element_justification='Left', layout=[[
@@ -44,7 +44,7 @@ class UI:
             [sg.Column([], key='boards', expand_x=True)],
         ])
 
-        program_layout = sg.Frame(title=INIT, key="stepsFrame", vertical_alignment='top', expand_y=True, layout=[
+        program_layout = sg.Frame(title=INIT, key='stepsFrame', vertical_alignment='top', expand_y=True, layout=[
             [
                 sg.Listbox(expand_x=True, expand_y=True, key='steps', values=[], enable_events=True),
 
@@ -145,7 +145,7 @@ class UI:
         Performs a windows tick.
         Returns the fired event
         """
-        event, self.values = self.window.read(timeout=TIMEOUT if self.values.get('autoRefresh', True) else None)
+        event, self.values = self.window.read(timeout=UI_REFRESH_TIMEOUT if self.values.get('autoRefresh', True) else None)
 
         # act
         if event == sg.WINDOW_CLOSED:

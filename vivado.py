@@ -2,7 +2,7 @@ import subprocess
 from glob import glob
 from time import sleep
 
-PRE_LOAD = True
+from CONFIG import VIVADO_PATH, VIVADO_PRE_LOAD
 
 
 class Vivado:
@@ -11,10 +11,10 @@ class Vivado:
         self.ready = False
 
         # TODO allow user to choose version
-        self.launcher = ([None] + sorted(glob("C:/Xilinx/Vivado/*/bin/vivado.bat")))[-1]
+        self.launcher = ([None] + sorted(glob(VIVADO_PATH)))[-1]
 
         # preload
-        if PRE_LOAD:
+        if VIVADO_PRE_LOAD:
             print("Preloading Vivado")
             self.prepare(wait_ready=False)
 
@@ -88,8 +88,9 @@ class Vivado:
         if self._instance is None: return
 
         try:
-            print("Closing vivado")
+            print("Closing Vivado")
             self._instance.communicate("exit", timeout=2)
         except subprocess.TimeoutExpired:
             print("Killing Vivado")
             self._instance.kill()
+            self._instance.communicate()

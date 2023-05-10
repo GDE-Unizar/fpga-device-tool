@@ -2,6 +2,8 @@ import os.path
 import subprocess
 from types import SimpleNamespace
 
+from CONFIG import FPGA_STATUS_DISABLED, FPGA_STATUS_ENABLED, FPGA_DESCRIPTION, FPGA_COMMAND_LIST, FPGA_COMMAND_ENABLE, FPGA_COMMAND_DISABLE
+
 
 class FPGAs:
     def __init__(self):
@@ -15,10 +17,7 @@ class FPGAs:
         """
 
         # get all
-        output = subprocess.check_output(
-            "pnputil /enum-devices /class USB /connected",
-            universal_newlines=True
-        )
+        output = subprocess.check_output(FPGA_COMMAND_LIST, universal_newlines=True)
 
         # process
         devices = []
@@ -31,15 +30,15 @@ class FPGAs:
             ))
 
         # filter
-        fpgas = [device for device in devices if device.device_description == "USB Serial Converter A"]
+        fpgas = [device for device in devices if device.device_description == FPGA_DESCRIPTION]
 
         # modify
         prefix = len(os.path.commonprefix([fpga.id for fpga in fpgas]))
         suffix = len(os.path.commonprefix([fpga.id[::-1] for fpga in fpgas]))
         for fpga in fpgas:
             fpga.enabled = (
-                True if fpga.status in ["Started", "Iniciado"]
-                else False if fpga.status in ["Disabled", "Disabled"]
+                True if fpga.status in FPGA_STATUS_ENABLED
+                else False if fpga.status in FPGA_STATUS_DISABLED
                 else None
             )
             fpga.name = fpga.id[prefix:-suffix] if len(fpgas) > 1 else fpga.id
@@ -98,7 +97,7 @@ class FPGAs:
         print("Enabling", i)
         for _ in range(10):
             try:
-                print(subprocess.check_call(f"pnputil /enable-device {self.fpgas[i].id}"))
+                print(subprocess.check_call(FPGA_COMMAND_ENABLE % self.fpgas[i].id))
                 break
             except Exception:
                 pass
@@ -115,7 +114,7 @@ class FPGAs:
         print("Disabling", i)
         for _ in range(10):
             try:
-                print(subprocess.check_call(f"pnputil /disable-device {self.fpgas[i].id}"))
+                print(subprocess.check_call(FPGA_COMMAND_DISABLE % self.fpgas[i].id))
                 break
             except Exception:
                 pass

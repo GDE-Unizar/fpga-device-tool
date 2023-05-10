@@ -196,6 +196,7 @@ def main():
         ui.tick()
 
     vivado.close()
+    print("Bye!")
 
 
 @run_as_admin
@@ -203,7 +204,7 @@ def main_admin():
     try:
         main()
     except Exception as e:
-        print("An exception ocurred:")
+        print("An exception occurred:")
         print(e)
         input("Press enter to exit")
 
