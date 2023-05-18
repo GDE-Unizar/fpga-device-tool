@@ -1,6 +1,7 @@
 import os
 import subprocess
 
+from CONFIG import VIVADO_BITSTREAM_LOAD
 from UI import UI
 from admin import run_as_admin
 from fpgas import FPGAs
@@ -165,6 +166,8 @@ def main():
             # add bistream
             file = self.values['stepsBitstream']
             self._addStep('bitstream', f'Program "{os.path.basename(file)}"', file)
+            if VIVADO_BITSTREAM_LOAD:
+                vivado.prepare(wait_ready=False)
 
         def _addStep(self, *step):
             selection = self.get_steps_selection()

@@ -2,7 +2,7 @@ import subprocess
 from glob import glob
 from time import sleep
 
-from CONFIG import VIVADO_PATH, VIVADO_PRE_LOAD
+from CONFIG import VIVADO_PATH, VIVADO_STARTUP_LOAD
 
 
 class Vivado:
@@ -14,7 +14,7 @@ class Vivado:
         self.launcher = ([None] + sorted(glob(VIVADO_PATH)))[-1]
 
         # preload
-        if VIVADO_PRE_LOAD:
+        if VIVADO_STARTUP_LOAD:
             print("Preloading Vivado")
             self.prepare(wait_ready=False)
 
