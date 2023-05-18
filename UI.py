@@ -85,7 +85,18 @@ class UI:
         self.window['stepsFrame'](f"Program steps: {len(self.steps_values)}")
 
         # info
-        self.window['info'].update(f"Boards: {len(fpgas)}")
+        info = f"Boards: {len(fpgas)}"
+        enabled = {
+            True: 0,
+            False: 0,
+            None: 0,
+        }
+        for fpga in fpgas:
+            enabled[fpgas.enabled(fpga)] += 1
+        for label, type in (("enabled", True), ("disabled", False), ("waiting", None)):
+            if enabled[type] != 0:
+                info += f" ({enabled[type] if enabled[type] != len(fpgas) else 'all'} {label})"
+        self.window['info'].update(info)
 
         # buttons
         self.window['programAll'].update(disabled=not canProgram)
@@ -235,6 +246,7 @@ class UI:
         # should be native, but it isn't
         self.window[key]('')
         self.values[key] = ''
+
 
 class CancelException(Exception):
     pass
