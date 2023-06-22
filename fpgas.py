@@ -2,7 +2,7 @@ import os.path
 import subprocess
 from types import SimpleNamespace
 
-from CONFIG import FPGA_STATUS_DISABLED, FPGA_STATUS_ENABLED, FPGA_DESCRIPTION, FPGA_COMMAND_LIST, FPGA_COMMAND_ENABLE, FPGA_COMMAND_DISABLE
+from CONFIG import FPGA_STATUS_DISABLED, FPGA_STATUS_ENABLED, FPGA_DESCRIPTION, FPGA_COMMAND_LIST, FPGA_COMMAND_ENABLE, FPGA_COMMAND_DISABLE, FPGA_COMMAND_ENABLE_RETRY, FPGA_COMMAND_DISABLE_RETRY
 
 
 class FPGAs:
@@ -95,7 +95,7 @@ class FPGAs:
         if self.enabled(i) is not False: return
 
         print("Enabling", i)
-        for _ in range(10):
+        for _ in range(FPGA_COMMAND_ENABLE_RETRY):
             try:
                 print(subprocess.check_call(FPGA_COMMAND_ENABLE % self.fpgas[i].id))
                 break
@@ -112,7 +112,7 @@ class FPGAs:
         if self.enabled(i) is not True: return
 
         print("Disabling", i)
-        for _ in range(10):
+        for _ in range(FPGA_COMMAND_DISABLE_RETRY):
             try:
                 print(subprocess.check_call(FPGA_COMMAND_DISABLE % self.fpgas[i].id))
                 break

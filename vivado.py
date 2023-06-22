@@ -2,7 +2,7 @@ import subprocess
 from glob import glob
 from time import sleep
 
-from CONFIG import VIVADO_PATH, VIVADO_STARTUP_LOAD
+from CONFIG import VIVADO_PATH, VIVADO_STARTUP_LOAD, VIVADO_PROGRAM_RETRY
 
 
 class Vivado:
@@ -78,11 +78,13 @@ class Vivado:
         self._run(f'set_property PROGRAM.FILE "{bitfile}" $hw_device')
         # if ila included: run("set_property PROBES.FILE {C:/design.ltx} $hw_device")
 
-        while True:
+        for _ in range(VIVADO_PROGRAM_RETRY):
             self._run("program_hw_devices $hw_device")
             result = self._waitUntil("End of startup status")
             if 'HIGH' in result: break
             sleep(1)
+        else:
+            print("Unable to program the device")
 
     def close(self):
         if self._instance is None: return
