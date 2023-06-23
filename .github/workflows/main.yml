@@ -7,7 +7,7 @@ on:
         description: 'Tag to use for the release'
         required: true
         type: string
-  
+
 jobs:
   build:
 
@@ -19,21 +19,21 @@ jobs:
       GH_TOKEN: ${{ github.token }}
 
     steps:
-    - uses: actions/checkout@v3
+      - uses: actions/checkout@v3
 
-    - name: Package Application
-      run: ./build.bat
+      - name: Package Application
+        run: ./build.bat
 
-    - name: Create tag
-      run: |
-        git tag -f ${{ inputs.tag }}
-        git push origin -f ${{ inputs.tag }}
+      - name: Delete existing, if any
+        continue-on-error: true
+        run: |
+          gh release delete ${{ inputs.tag }} --cleanup-tag -y
 
-    - name: Create release
-      run: |
-        gh release create ${{ inputs.tag }} --generate-notes
+      - name: Create release
+        run: |
+          gh release create ${{ inputs.tag }} --generate-notes
 
-    - name: Upload executables
-      run: |
-        cd dist
-        gh release upload ${{ inputs.tag }} $(Get-ChildItem . -name)
+      - name: Upload executables
+        run: |
+          cd dist
+          gh release upload ${{ inputs.tag }} $(Get-ChildItem . -name)
