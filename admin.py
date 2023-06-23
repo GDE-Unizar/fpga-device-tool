@@ -47,8 +47,9 @@ def run_as_admin(main):
             main()
         else:
             print("Asking for administrator permissions...")
+            params = sys.argv if sys.executable != sys.argv[0] else sys.argv[1:]
             hinstance = ctypes.windll.shell32.ShellExecuteW(
-                None, 'runas', sys.executable, sys.argv[0], None, SW.SHOWNORMAL
+                None, 'runas', sys.executable, " ".join([f'"{param}"' for param in params]), None, SW.SHOWNORMAL
             )
             if hinstance <= 32:
                 raise RuntimeError(ERROR(hinstance))
