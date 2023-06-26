@@ -12,7 +12,7 @@ FPGA_STATUS_ENABLED = ["Started", "Iniciado"]
 # --- #
 
 VIVADO_PATH = "C:/Xilinx/Vivado*/*/bin/vivado*.bat"
-VIVADO_STARTUP_LOAD = False
+VIVADO_STARTUP_LOAD = True
 VIVADO_BITSTREAM_LOAD = True
 
 VIVADO_PROGRAM_RETRY = 10
