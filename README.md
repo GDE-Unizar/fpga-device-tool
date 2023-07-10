@@ -2,9 +2,7 @@
 
 Note: This tool was developed and published on the [SMACD 2023 conference](https://smacd-conference.org/). If you use this tool please cite the following paper:
 
-`
-A. Naya-Forcano, M. Garcia-Bosque, G. Díez-Señorans, S. Celma, "Multiprogram tools for FPGA boards with single identifier on Windows," International Conference on Synthesis, Modeling, Analysis and Simulation Methods, and Applications to Circuit Design (SMACD 2023), Madeira, Portugal, 2023.
-`
+> A. Naya-Forcano, M. Garcia-Bosque, G. Díez-Señorans, S. Celma, "Multiprogram tools for FPGA boards with single identifier on Windows," International Conference on Synthesis, Modeling, Analysis and Simulation Methods, and Applications to Circuit Design (SMACD 2023), Madeira, Portugal, 2023.
 
 ## Description
 
