@@ -12,6 +12,8 @@ The project solves this issue by enabling/disabling the devices. By disabling al
 
 The project started as [multiple single-file PowerShell scripts](https://gist.github.com/abeln94/153391e545934ed8cde2e796dd9bf7b5), but later was improved as a python application.
 
+For an alternative solution, [here](https://gist.github.com/abeln94/a9060066a764b609b754941b7ab901d5) you can find instructions and tools to change the PYNQ-Z2 internal identifier.
+
 ## Installation
 
 You can download the [latest version](https://github.com/abeln94/fpga-device-tool/releases/latest) from the [releases page](https://github.com/abeln94/fpga-device-tool/releases).
